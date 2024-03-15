@@ -1,0 +1,38 @@
+- hosts: servers
+  tasks:
+    - name: Install Apache web server
+      become: true
+      yum:
+        name: httpd
+        state: present
+
+    - name: Start Apache service
+      become: true
+      service:
+        name: httpd
+        state: starteds
+        enabled: true
+
+    - name: Copy HTML file
+      become: true
+      template:
+        src: index.html
+        dest: /var/www/html/index.html
+
+    - name: Generate Self-Signed SSL certificate
+      become: true
+      command: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/pki/tls/private/server.key \
+        -out /etc/pki/tls/certs/server.crt \
+        -subj "/CN=localhost"
+
+    - name: Configure Apache SSL virtual host
+      become: true
+      template:
+        src: ssl.conf
+        dest: /etc/httpd/conf.d/ssl.conf
+
+    - name: Restart Apache service
+      become: true
+      service:
